@@ -2,11 +2,7 @@
 
 tmux has-session -t forge-main 2>/dev/null || {
   tmux new-session -d -s forge-main
-  tmux send-keys -t forge-main "bash ~/blckswan/forge/tui/blckswan-tui.sh" C-m
-}
-
-tmux has-session -t salvage 2>/dev/null || {
-  tmux new-session -d -s salvage
+  tmux send-keys -t forge-main "bash ~/blckswan/forge/tui/live.sh" C-m
 }
 
 tmux has-session -t logs 2>/dev/null || {
