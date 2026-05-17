@@ -1,0 +1,19 @@
+name: forge-test
+
+on:
+  push:
+
+jobs:
+  test:
+    runs-on: self-hosted
+
+    steps:
+      - name: checkout
+        uses: actions/checkout@v4
+
+      - name: forge online
+        run: |
+          echo "BLCKSWAN FORGE ONLINE"
+          hostname
+          uptime
+          docker ps
