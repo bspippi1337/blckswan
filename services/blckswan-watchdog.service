@@ -1,0 +1,6 @@
+[Unit]
+Description=BLCKSWAN watchdog
+
+[Service]
+Type=oneshot
+ExecStart=%h/blckswan/services/blckswan-watchdog.sh

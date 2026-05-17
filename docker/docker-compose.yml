@@ -1,0 +1,41 @@
+services:
+
+  uptime-kuma:
+    image: louislam/uptime-kuma:1
+    container_name: blckswan-uptime
+    restart: unless-stopped
+    ports:
+      - "3001:3001"
+    volumes:
+      - ./uptime-kuma:/app/data
+
+  netdata:
+    image: netdata/netdata:latest
+    container_name: blckswan-netdata
+    restart: unless-stopped
+    ports:
+      - "19999:19999"
+    cap_add:
+      - SYS_PTRACE
+    security_opt:
+      - apparmor=unconfined
+    volumes:
+      - /etc/passwd:/host/etc/passwd:ro
+      - /etc/group:/host/etc/group:ro
+      - /proc:/host/proc:ro
+      - /sys:/host/sys:ro
+      - /etc/os-release:/host/etc/os-release:ro
+
+  syncthing:
+    image: syncthing/syncthing:latest
+    container_name: blckswan-sync
+    restart: unless-stopped
+    ports:
+      - "8384:8384"
+      - "22000:22000/tcp"
+      - "22000:22000/udp"
+      - "21027:21027/udp"
+    volumes:
+      - ./syncthing:/var/syncthing
+      - ~/blckswan:/sync/blckswan
+
