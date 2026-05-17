@@ -1,0 +1,40 @@
+#!/data/data/com.termux/files/usr/bin/bash
+
+RED="\033[1;31m"
+DIM="\033[2m"
+NC="\033[0m"
+
+clear
+
+printf "$RED"
+
+cat << "BANNER"
+██████╗ ██╗      ██████╗██╗  ██╗███████╗██╗    ██╗ █████╗ ███╗   ██╗
+██╔══██╗██║     ██╔════╝██║ ██╔╝██╔════╝██║    ██║██╔══██╗████╗  ██║
+██████╔╝██║     ██║     █████╔╝ ███████╗██║ █╗ ██║███████║██╔██╗ ██║
+██╔══██╗██║     ██║     ██╔═██╗ ╚════██║██║███╗██║██╔══██║██║╚██╗██║
+██████╔╝███████╗╚██████╗██║  ██╗███████║╚███╔███╔╝██║  ██║██║ ╚████║
+╚═════╝ ╚══════╝ ╚═════╝╚═╝  ╚═╝╚══════╝ ╚══╝╚══╝ ╚═╝  ╚═╝╚═╝  ╚═══╝
+BANNER
+
+printf "$NC\n"
+
+echo "NODE-42 ONLINE"
+echo "FORGE LINK STABLE"
+echo
+
+echo "[1] forge shell"
+echo "[2] system monitor"
+echo "[3] ssh forge"
+echo "[4] matrix rain"
+echo
+
+read -rp "select> " x
+
+case "$x" in
+  1) bash ;;
+  2) btop ;;
+  3) ssh forge ;;
+  4) cmatrix ;;
+  *) bash ;;
+esac

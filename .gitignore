@@ -1,0 +1,9 @@
+.repo/
+android/
+out/
+*.img
+*.zip
+*.tar.md5
+logs/*.private
+runner/
+salvage/
