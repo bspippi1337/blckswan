@@ -34,7 +34,17 @@ jobs:
           cache-read-only: ${{ github.event_name == 'pull_request' }}
 
       - name: Build native Android APK
-        run: gradle --no-daemon --stacktrace -p monica-key :app:assembleDebug
+        shell: bash
+        run: |
+          set +e
+          gradle --no-daemon --console=plain --stacktrace -p monica-key :app:assembleDebug > android-build.log 2>&1
+          status=$?
+          if [ "$status" -ne 0 ]; then
+            echo "===== ANDROID BUILD FAILURE ====="
+            tail -n 180 android-build.log
+            exit "$status"
+          fi
+          tail -n 40 android-build.log
 
       - name: Verify APK
         run: |
