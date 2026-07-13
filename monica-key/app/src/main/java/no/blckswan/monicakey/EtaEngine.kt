@@ -10,7 +10,7 @@ import kotlin.math.sqrt
 object EtaEngine {
     fun calculate(from: LocationPoint, home: HomePoint): EtaSnapshot {
         val straight = haversineMeters(from.latitude, from.longitude, home.latitude, home.longitude)
-        val movingSpeed = (from.speedMps * 3.6).coerceAtLeast(0f)
+        val movingSpeed = (from.speedMps * 3.6f).coerceAtLeast(0f)
 
         val walkingDistanceKm = straight * 1.18 / 1000.0
         val bicycleDistanceKm = straight * 1.12 / 1000.0
