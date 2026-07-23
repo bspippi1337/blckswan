@@ -1,0 +1,44 @@
+name: BLCKSWAN Art Guide Pages
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'art-guide/**'
+      - '.github/workflows/art-guide-pages.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Unpack interactive gallery
+        run: |
+          mkdir -p public
+          base64 -d art-guide/site.tar.gz.b64 > /tmp/blckswan-art-guide.tar.gz
+          tar -xzf /tmp/blckswan-art-guide.tar.gz -C public
+      - uses: actions/configure-pages@v5
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: public
+
+  deploy:
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    runs-on: ubuntu-latest
+    needs: build
+    steps:
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
