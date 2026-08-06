@@ -1,0 +1,249 @@
+name: Musify Windows Portable
+
+on:
+  workflow_dispatch:
+    inputs:
+      musify_ref:
+        description: Upstream Musify branch or tag
+        required: false
+        default: master
+  push:
+    branches:
+      - agent/musify-windows-portable
+    paths:
+      - projects/musify-windows-portable/**
+      - .github/workflows/musify-windows-portable.yml
+
+permissions:
+  contents: write
+
+concurrency:
+  group: musify-windows-portable-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build-portable:
+    name: Build portable Windows x64 release
+    runs-on: windows-2022
+    timeout-minutes: 45
+    env:
+      MUSIFY_REF: ${{ github.event.inputs.musify_ref || 'master' }}
+      SOURCE_DIR: ${{ github.workspace }}\Musify
+      ARTIFACT_DIR: ${{ github.workspace }}\artifacts
+
+    steps:
+      - name: Checkout BLCKSWAN port files
+        uses: actions/checkout@v4
+
+      - name: Install Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: 3.44.8
+          channel: stable
+          cache: true
+
+      - name: Clone current Musify source
+        shell: pwsh
+        run: |
+          git clone --depth 1 --branch "$env:MUSIFY_REF" https://github.com/gokadzev/Musify.git "$env:SOURCE_DIR"
+          $sourceSha = git -C "$env:SOURCE_DIR" rev-parse HEAD
+          "MUSIFY_SHA=$sourceSha" | Out-File -FilePath $env:GITHUB_ENV -Append -Encoding utf8
+
+      - name: Generate Windows runner
+        shell: pwsh
+        run: |
+          flutter config --enable-windows-desktop
+          Push-Location "$env:SOURCE_DIR"
+          flutter create --platforms=windows --project-name musify .
+          Pop-Location
+
+      - name: Apply portable Windows port
+        shell: pwsh
+        run: |
+          & "${{ github.workspace }}\projects\musify-windows-portable\port-musify.ps1" -SourceDir "$env:SOURCE_DIR"
+
+      - name: Resolve Flutter packages
+        shell: pwsh
+        run: |
+          Push-Location "$env:SOURCE_DIR"
+          flutter pub get
+          flutter gen-l10n
+          Pop-Location
+
+      - name: Build Windows release
+        shell: pwsh
+        run: |
+          Push-Location "$env:SOURCE_DIR"
+          flutter build windows --release
+          Pop-Location
+
+      - name: Package binary, runtime and corresponding source
+        id: package
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+          New-Item -ItemType Directory -Path "$env:ARTIFACT_DIR" -Force | Out-Null
+
+          $pubspecVersion = (Select-String -Path "$env:SOURCE_DIR\pubspec.yaml" -Pattern '^version:\s*(.+)$').Matches[0].Groups[1].Value.Trim()
+          $version = $pubspecVersion.Split('+')[0]
+          $releaseName = "Musify-Windows-Portable-v$version-x64"
+
+          $releaseDir = Get-ChildItem "$env:SOURCE_DIR\build\windows" -Directory -Recurse |
+            Where-Object {
+              $_.Name -eq 'Release' -and
+              (Test-Path (Join-Path $_.FullName 'Musify.exe'))
+            } |
+            Select-Object -First 1
+
+          if (-not $releaseDir) {
+            throw 'Musify.exe was not found in a Windows Release directory.'
+          }
+
+          $portableDir = Join-Path "$env:ARTIFACT_DIR" $releaseName
+          New-Item -ItemType Directory -Path $portableDir -Force | Out-Null
+          Copy-Item (Join-Path $releaseDir.FullName '*') $portableDir -Recurse -Force
+
+          # App-local Microsoft Visual C++ runtime for installer-free use.
+          $vswhere = "${env:ProgramFiles(x86)}\Microsoft Visual Studio\Installer\vswhere.exe"
+          if (-not (Test-Path $vswhere)) {
+            throw 'vswhere.exe was not found on the Windows runner.'
+          }
+
+          $vsInstall = & $vswhere -latest -products '*' -requires Microsoft.VisualStudio.Component.VC.Tools.x86.x64 -property installationPath
+          if (-not $vsInstall) {
+            throw 'Visual Studio C++ installation could not be resolved.'
+          }
+
+          $redistBase = Join-Path $vsInstall 'VC\Redist\MSVC'
+          $redistVersion = Get-ChildItem $redistBase -Directory |
+            Sort-Object Name -Descending |
+            Select-Object -First 1
+          $crtDir = Get-ChildItem (Join-Path $redistVersion.FullName 'x64') -Directory |
+            Where-Object { $_.Name -like 'Microsoft.VC*.CRT' } |
+            Select-Object -First 1
+
+          if (-not $crtDir) {
+            throw 'Microsoft Visual C++ x64 CRT directory was not found.'
+          }
+          Copy-Item (Join-Path $crtDir.FullName '*.dll') $portableDir -Force
+
+          $portableData = Join-Path $portableDir 'portable-data'
+          New-Item -ItemType Directory -Path $portableData -Force | Out-Null
+          @'
+Musify stores settings, cache, playlists, downloads and databases in this directory.
+Keep it beside Musify.exe to preserve portable mode.
+'@ | Set-Content (Join-Path $portableData 'README.txt') -Encoding utf8
+
+          @'
+@echo off
+cd /d "%~dp0"
+start "" "Musify.exe"
+'@ | Set-Content (Join-Path $portableDir 'START-MUSIFY.cmd') -Encoding ascii
+
+          @"
+MUSIFY WINDOWS PORTABLE
+
+Version: $version
+Upstream commit: $env:MUSIFY_SHA
+Architecture: Windows x64
+
+1. Extract the complete ZIP to a writable directory.
+2. Start START-MUSIFY.cmd or Musify.exe.
+3. Do not move Musify.exe away from its DLL and data folders.
+
+No installer is required. All writable application data stays under portable-data.
+The Android-only equalizer is unavailable on Windows. Playback, downloads,
+playlists, offline data and Windows media controls are included.
+
+Source code for this exact binary is published beside the binary ZIP.
+Musify is licensed under GPL-3.0-or-later.
+"@ | Set-Content (Join-Path $portableDir 'README-PORTABLE.txt') -Encoding utf8
+
+          Copy-Item "$env:SOURCE_DIR\LICENSE" (Join-Path $portableDir 'LICENSE') -Force
+          @"
+Corresponding patched source:
+Musify-Windows-Portable-v$version-source.zip
+
+Original project:
+https://github.com/gokadzev/Musify
+
+Portable compatibility layer:
+https://github.com/$env:GITHUB_REPOSITORY/tree/agent/musify-windows-portable/projects/musify-windows-portable
+"@ | Set-Content (Join-Path $portableDir 'SOURCE-CODE.txt') -Encoding utf8
+
+          $binaryZip = Join-Path "$env:ARTIFACT_DIR" "$releaseName.zip"
+          Compress-Archive -Path (Join-Path $portableDir '*') -DestinationPath $binaryZip -CompressionLevel Optimal -Force
+
+          $sourceName = "Musify-Windows-Portable-v$version-source"
+          $sourceStaging = Join-Path "$env:ARTIFACT_DIR" $sourceName
+          New-Item -ItemType Directory -Path $sourceStaging -Force | Out-Null
+          & robocopy "$env:SOURCE_DIR" $sourceStaging /E /XD .git .dart_tool build /XF '*.log'
+          $robocopyCode = $LASTEXITCODE
+          if ($robocopyCode -gt 7) {
+            throw "robocopy failed with exit code $robocopyCode"
+          }
+          $global:LASTEXITCODE = 0
+
+          Copy-Item "${{ github.workspace }}\projects\musify-windows-portable\README.md" (Join-Path $sourceStaging 'WINDOWS-PORTABLE-README.md') -Force
+          Copy-Item "${{ github.workspace }}\projects\musify-windows-portable\port-musify.ps1" (Join-Path $sourceStaging 'WINDOWS-PORTABLE-PATCH.ps1') -Force
+
+          $sourceZip = Join-Path "$env:ARTIFACT_DIR" "$sourceName.zip"
+          Compress-Archive -Path (Join-Path $sourceStaging '*') -DestinationPath $sourceZip -CompressionLevel Optimal -Force
+
+          $checksumFile = Join-Path "$env:ARTIFACT_DIR" 'SHA256SUMS.txt'
+          $binaryHash = (Get-FileHash $binaryZip -Algorithm SHA256).Hash.ToLowerInvariant()
+          $sourceHash = (Get-FileHash $sourceZip -Algorithm SHA256).Hash.ToLowerInvariant()
+          @(
+            "$binaryHash  $(Split-Path $binaryZip -Leaf)",
+            "$sourceHash  $(Split-Path $sourceZip -Leaf)"
+          ) | Set-Content $checksumFile -Encoding ascii
+
+          $releaseTag = "musify-windows-portable-v$version-b$env:GITHUB_RUN_NUMBER.$env:GITHUB_RUN_ATTEMPT"
+          $releaseNotes = Join-Path "$env:ARTIFACT_DIR" 'RELEASE-NOTES.md'
+          @"
+# Musify Windows Portable v$version
+
+Portable Windows x64 build generated from upstream Musify commit `$env:MUSIFY_SHA`.
+
+- No installer
+- App-local Visual C++ runtime
+- Settings, downloads and databases remain in `portable-data`
+- MediaKit Windows audio backend
+- Windows System Media Transport Controls
+- Corresponding patched source included as a separate ZIP
+
+Extract the complete binary ZIP before launching `START-MUSIFY.cmd`.
+"@ | Set-Content $releaseNotes -Encoding utf8
+
+          "MUSIFY_VERSION=$version" | Out-File -FilePath $env:GITHUB_ENV -Append -Encoding utf8
+          "BINARY_ZIP=$binaryZip" | Out-File -FilePath $env:GITHUB_ENV -Append -Encoding utf8
+          "SOURCE_ZIP=$sourceZip" | Out-File -FilePath $env:GITHUB_ENV -Append -Encoding utf8
+          "CHECKSUM_FILE=$checksumFile" | Out-File -FilePath $env:GITHUB_ENV -Append -Encoding utf8
+          "RELEASE_TAG=$releaseTag" | Out-File -FilePath $env:GITHUB_ENV -Append -Encoding utf8
+          "RELEASE_NOTES=$releaseNotes" | Out-File -FilePath $env:GITHUB_ENV -Append -Encoding utf8
+
+      - name: Upload portable build artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: Musify-Windows-Portable-v${{ env.MUSIFY_VERSION }}-x64
+          path: |
+            ${{ env.BINARY_ZIP }}
+            ${{ env.SOURCE_ZIP }}
+            ${{ env.CHECKSUM_FILE }}
+          if-no-files-found: error
+          compression-level: 0
+
+      - name: Publish GitHub release
+        shell: pwsh
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release create "$env:RELEASE_TAG" `
+            "$env:BINARY_ZIP" `
+            "$env:SOURCE_ZIP" `
+            "$env:CHECKSUM_FILE" `
+            --repo "$env:GITHUB_REPOSITORY" `
+            --target "$env:GITHUB_SHA" `
+            --title "Musify Windows Portable v$env:MUSIFY_VERSION" `
+            --notes-file "$env:RELEASE_NOTES" `
+            --latest
