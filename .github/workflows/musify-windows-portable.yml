@@ -9,6 +9,7 @@ on:
         default: master
   push:
     branches:
+      - main
       - agent/musify-windows-portable
     paths:
       - projects/musify-windows-portable/**
@@ -168,7 +169,7 @@ Original project:
 https://github.com/gokadzev/Musify
 
 Portable compatibility layer:
-https://github.com/$env:GITHUB_REPOSITORY/tree/agent/musify-windows-portable/projects/musify-windows-portable
+https://github.com/$env:GITHUB_REPOSITORY/tree/main/projects/musify-windows-portable
 "@ | Set-Content (Join-Path $portableDir 'SOURCE-CODE.txt') -Encoding utf8
 
           $binaryZip = Join-Path "$env:ARTIFACT_DIR" "$releaseName.zip"
