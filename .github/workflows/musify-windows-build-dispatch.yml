@@ -1,0 +1,31 @@
+name: Musify Windows Build Dispatch
+
+on:
+  issues:
+    types:
+      - opened
+
+permissions:
+  actions: write
+  issues: write
+  contents: read
+
+jobs:
+  dispatch:
+    if: contains(github.event.issue.title, '[build-musify-windows]')
+    runs-on: ubuntu-latest
+    steps:
+      - name: Dispatch portable Windows build
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh workflow run musify-windows-portable.yml \
+            --repo "$GITHUB_REPOSITORY" \
+            --ref main \
+            -f musify_ref=master
+
+      - name: Close build trigger
+        env:
+          GH_TOKEN: ${{ github.token }}
+          ISSUE_URL: ${{ github.event.issue.html_url }}
+        run: gh issue close "$ISSUE_URL" --comment "Musify Windows portable build dispatched."
