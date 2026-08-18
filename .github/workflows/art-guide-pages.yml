@@ -1,10 +1,11 @@
-name: BLCKSWAN Art Guide Pages
+name: BLCKSWAN Pages
 
 on:
   push:
     branches: [main]
     paths:
       - 'art-guide/**'
+      - 'app/**'
       - '.github/workflows/art-guide-pages.yml'
   workflow_dispatch:
 
@@ -22,11 +23,28 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - name: Unpack interactive gallery
+
+      - name: Build Pages artifact
         run: |
+          set -eux
           mkdir -p public
+
+          # Existing ART IN THE LOG gallery stays at the Pages root.
           base64 -d art-guide/site.tar.gz.b64 > /tmp/blckswan-art-guide.tar.gz
           tar -xzf /tmp/blckswan-art-guide.tar.gz -C public
+
+          # BLCKSWAN app landing page lives alongside it at /app/.
+          mkdir -p public/app
+          cp -a app/. public/app/
+
+          # Repository-only notes are not part of the website.
+          rm -f public/app/README.md
+
+          test -s public/index.html
+          test -s public/app/index.html
+          test -s public/app/icon.svg
+          test -s public/app/manifest.webmanifest
+
       - uses: actions/configure-pages@v5
       - uses: actions/upload-pages-artifact@v3
         with:
