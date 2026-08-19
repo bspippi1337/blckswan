@@ -1,28 +1,34 @@
-# BLCKSWAN v1.4 GAMELOOP
+# BLCKSWAN v1.5 STORYMODE
 
-GitHub Pages webgame + Android APK for the BLCKSWAN 4×3 model.
+GitHub Pages story game + Android APK for the BLCKSWAN 4×3 model.
 
 ## Current version
 
-`v1.4 GAMELOOP`
+`v1.5 STORYMODE`
 
 Core:
 
 `FRIHET + KUNNSKAP + TEST + REVISJON`
 
-Game layer:
+## SIGNAL LOST
 
-- 7-round runs
+- 7 connected chapters
+- choices affect Evidence / Trust / Pressure / Integrity
+- consequences carry forward
+- BLACK SWAN surprise event
+- multiple endings from S to D
+- Virkelighetsbro and local reflection
+
+## GAMELOOP retained
+
 - XP + levels
-- combo system
 - four local skill tracks
-- adaptive runs that favor the weakest track
-- BOSS // BLACK BOX at level 2
-- mistakes award `INTEL` XP instead of lives lost
-- Virkelighetsbro after each run
-- localStorage progress only
+- MICRO RUN
+- BLACK BOX boss
+- mistakes become `INTEL`
 - overlay-only glitch feedback
-- no account, analytics, ads or leaderboard
+- localStorage progress only
+- no account, analytics, ads, currency, store or leaderboard
 
 ## Play
 
@@ -30,10 +36,10 @@ https://bspippi1337.github.io/blckswan/app/
 
 ## Android
 
-https://bspippi1337.github.io/blckswan/app/BLCKSWAN-v1.4-GAMELOOP.apk
+Current chat artifact: `BLCKSWAN-v1.5-STORYMODE.apk`
 
 SHA-256:
 
-`8654e5d8a85b11da7e3e93aac5ca12bdf93ddd0ef8e9e6315b4558c6140db374`
+`2b8e1f29315eb5dcc320a54ef212bf3aeb4ecece13edb871c14332df257962e4`
 
-The Pages source is `app/index.html`; the Android build from the working session is also available in the chat artifact handoff.
+v1.5 is signed with the same development certificate as v1.4 GAMELOOP so it can replace the v1.4 development build.
