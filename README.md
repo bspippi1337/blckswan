@@ -6,15 +6,21 @@ NODE-42 + FORGE.
 
 ## BLCKSWAN APP
 
-BLCKSWAN v1.4 GAMELOOP er et local-first Android-verktøy for kritisk tenkning, problemløsing og aktiv læring. Den opprinnelige 100-punktsmodellen er komprimert til 12 kjernegrep i fire moduler: `FRIHET + KUNNSKAP + TEST + REVISJON`.
+**Current: BLCKSWAN v1.5 STORYMODE**
 
-v1.4 gjør kjernen spillbar med 7-runders runs, XP, combo, adaptive svakhetsrunder, boss-scenarioer og Virkelighetsbro. Feil gir `INTEL` i stedet for tom straff.
+BLCKSWAN er et local-first verktøy for kritisk tenkning, problemløsing og aktiv læring. Den opprinnelige 100-punktsmodellen er komprimert til 12 kjernegrep i fire moduler: `FRIHET + KUNNSKAP + TEST + REVISJON`.
 
-- [Spill webdemoen](https://bspippi1337.github.io/blckswan/app/)
-- [Last ned BLCKSWAN v1.4 GAMELOOP APK](https://bspippi1337.github.io/blckswan/app/BLCKSWAN-v1.4-GAMELOOP.apk)
-- [Se spillkilden](app/index.html)
+v1.5 legger et sammenhengende spillag over GAMELOOP. Første kampanje er **SIGNAL LOST**: syv kapitler der valg påvirker `Evidence`, `Trust`, `Pressure` og `Integrity`. Nye data, KPI-feller, autoritetspress, sunk cost og en Black Swan-hendelse følger samme beslutning videre fram til en S–D-ending.
 
-SHA-256 APK: `8654e5d8a85b11da7e3e93aac5ca12bdf93ddd0ef8e9e6315b4558c6140db374`
+Spillprinsippet er fortsatt enkelt: gode valg gir fart, feil gir `INTEL`. Ingen livssystem, butikk, annonser eller leaderboard.
+
+- [Spill BLCKSWAN v1.5 STORYMODE på GitHub Pages](https://bspippi1337.github.io/blckswan/app/)
+- [Se STORYMODE-kilden](app/index.html)
+- [Les v1.5-notatene](app/README-v1.5.md)
+
+Android-builden `BLCKSWAN-v1.5-STORYMODE.apk` er signert med samme utviklingssertifikat som v1.4 GAMELOOP, slik at v1.5 kan erstatte v1.4.
+
+SHA-256 APK: `2b8e1f29315eb5dcc320a54ef212bf3aeb4ecece13edb871c14332df257962e4`
 
 ## ART IN THE LOG
 
